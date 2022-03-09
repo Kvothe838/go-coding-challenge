@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"codingchallenge/model"
+	"codingchallenge/services"
 	"log"
 	"net/http"
 	"net/url"
 )
-
-var visits []model.VisitedUrl
 
 func VisitUrl(response http.ResponseWriter, request *http.Request) {
 	var data struct {
@@ -22,12 +20,14 @@ func VisitUrl(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	visitedUrl := model.VisitedUrl{
-		VisitorId: data.VisitorId,
-		Url:       data.Url,
+	err = services.VisitUrl(data.VisitorId, data.Url)
+
+	if err != nil {
+		log.Printf("error visiting url (visitorId = %v, url = %v): %v", data.VisitorId, data.Url, err)
+		response.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	visits = append(visits, visitedUrl)
 	Json(response, http.StatusOK, nil)
 }
 
@@ -42,24 +42,14 @@ func GetVisitors(response http.ResponseWriter, request *http.Request) {
 
 	url, err := url.QueryUnescape(urlParam)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("error uncoding url (urlParam = %v): %v", urlParam, err)
 		return
 	}
 
-	distinctVisitors := make(map[string]bool, 0)
-
-	for _, visit := range visits {
-		if visit.Url == url {
-			distinctVisitors[visit.VisitorId] = true
-		}
-	}
-
-	totalVisitors := 0
-
-	for _, hasVisitedUrl := range distinctVisitors {
-		if hasVisitedUrl {
-			totalVisitors++
-		}
+	totalVisitors, err := services.GetVisitors(url)
+	if err != nil {
+		log.Printf("error getting total visitors (url = %v): %v", url, err)
+		return
 	}
 
 	responseData := struct {
