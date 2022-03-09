@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"codingchallenge/model"
+
 	"github.com/gorilla/mux"
 )
 
@@ -22,15 +24,13 @@ func handleRequests() {
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 
-type VisitUrlData struct {
-	VisitorId  string `json:"visitorId"`
-	VisitedUrl string `json:"visitedUrl"`
-}
-
-var visits []VisitUrlData
+var visits []model.VisitedUrl
 
 func visitUrl(response http.ResponseWriter, request *http.Request) {
-	var data VisitUrlData
+	var data struct {
+		VisitorId string `json:"visitorId"`
+		Url       string `json:"url"`
+	}
 
 	err := decode(request.Body, &data)
 	if err != nil {
@@ -39,11 +39,12 @@ func visitUrl(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	log.Println("new decode")
-	log.Printf("id: %s", data.VisitorId)
-	log.Printf("url: %s", data.VisitedUrl)
+	visitedUrl := model.VisitedUrl{
+		VisitorId: data.VisitorId,
+		Url:       data.Url,
+	}
 
-	visits = append(visits, data)
+	visits = append(visits, visitedUrl)
 	Json(response, http.StatusOK, nil)
 }
 
@@ -65,8 +66,7 @@ func getVisitors(response http.ResponseWriter, request *http.Request) {
 	distinctVisitors := make(map[string]bool, 0)
 
 	for _, visit := range visits {
-		log.Printf("visit.VisitedUrl: %s", visit.VisitedUrl)
-		if visit.VisitedUrl == url {
+		if visit.Url == url {
 			distinctVisitors[visit.VisitorId] = true
 		}
 	}
