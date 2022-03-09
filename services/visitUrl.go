@@ -2,9 +2,11 @@ package services
 
 import (
 	"codingchallenge/model"
+	"sync"
 )
 
 var visits []model.VisitedUrl
+var visitsMutex = sync.Mutex{}
 
 func VisitUrl(visitorId string, url string) error {
 	visitedUrl := model.VisitedUrl{
@@ -12,7 +14,11 @@ func VisitUrl(visitorId string, url string) error {
 		Url:       url,
 	}
 
+	visitsMutex.Lock()
+
 	visits = append(visits, visitedUrl)
+
+	visitsMutex.Unlock()
 
 	return nil
 }
@@ -20,12 +26,16 @@ func VisitUrl(visitorId string, url string) error {
 func GetVisitors(url string) (int, error) {
 	distinctVisitors := make(map[string]bool, 0)
 
+	visitsMutex.Lock()
+
 	// Set VisitorId as map key in true when visited url matches url param to avoid repeating visits for same visitor id and visited url
 	for _, visit := range visits {
 		if visit.Url == url {
 			distinctVisitors[visit.VisitorId] = true
 		}
 	}
+
+	visitsMutex.Unlock()
 
 	totalVisitors := 0
 
