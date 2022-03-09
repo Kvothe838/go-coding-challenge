@@ -1,6 +1,8 @@
 package services
 
-import "codingchallenge/model"
+import (
+	"codingchallenge/model"
+)
 
 var visits []model.VisitedUrl
 

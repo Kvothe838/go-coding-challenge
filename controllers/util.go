@@ -20,7 +20,7 @@ func Json(response http.ResponseWriter, status int, data interface{}) {
 
 	_, err = response.Write(bytes)
 	if err != nil {
-		log.Printf("error while writting bytes to response writer: %+v", err)
+		log.Printf("error while writing bytes to response writer: %+v", err)
 	}
 }
 
